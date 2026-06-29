@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Palm Fruit Catcher</title>
+    <title>Palm FFB Catcher</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         html, body {
@@ -12,30 +12,30 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #4FC3F7;
-            touch-action: none; /* Prevents scroll/zoom on mobile */
+            background-color: #E0F7FA;
+            touch-action: none;
             user-select: none;
             -webkit-user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         canvas {
             display: block;
         }
         @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-2px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            10% { transform: translate(-3px, -2px) rotate(-1deg); }
+            20% { transform: translate(-4px, 0px) rotate(1deg); }
+            30% { transform: translate(4px, 3px) rotate(0deg); }
+            40% { transform: translate(2px, -2px) rotate(1deg); }
+            50% { transform: translate(-2px, 3px) rotate(-1deg); }
+            60% { transform: translate(-4px, 2px) rotate(0deg); }
+            70% { transform: translate(4px, 2px) rotate(-1deg); }
+            80% { transform: translate(-2px, -2px) rotate(1deg); }
+            90% { transform: translate(2px, 3px) rotate(0deg); }
+            100% { transform: translate(2px, -3px) rotate(-1deg); }
         }
         .shake {
-            animation: shake 0.3s;
-            animation-iteration-count: 1;
+            animation: shake 0.4s ease-in-out;
         }
     </style>
 </head>
@@ -44,35 +44,256 @@
     <!-- Game Canvas -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- HUD (Score and Lives) -->
+    <!-- HUD Overlay -->
     <div id="hud" class="absolute top-0 left-0 w-full p-4 flex justify-between items-start pointer-events-none z-10 opacity-0 transition-opacity duration-300">
-        <div class="bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-lg border border-white/50 flex flex-col items-center">
-            <span class="text-gray-500 text-xs font-black uppercase tracking-widest mb-1">Score</span>
-            <span id="hud-score" class="text-4xl font-black text-orange-600 leading-none">0</span>
+        <!-- Score Card -->
+        <div class="bg-white/90 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-lg border border-white/50 flex flex-col items-center">
+            <span class="text-emerald-700 text-[10px] font-black uppercase tracking-widest mb-0.5">Score</span>
+            <span id="hud-score" class="text-3xl font-black text-slate-800 leading-none">0</span>
         </div>
-        <div class="bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex gap-1" id="hud-lives">
+
+        <!-- Audio controls & Active Difficulty Label -->
+        <div class="flex gap-2 pointer-events-auto">
+            <!-- Mute/Unmute Button -->
+            <button id="mute-btn" class="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white/50 text-slate-750 hover:bg-white active:scale-95 transition-all cursor-pointer flex items-center justify-center">
+                <svg id="sound-on-icon" class="w-6 h-6 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z" />
+                </svg>
+                <svg id="sound-off-icon" class="w-6 h-6 text-slate-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 14l4-4m0 4l-4-4" />
+                </svg>
+            </button>
+            
+            <div class="hidden sm:flex bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg border border-white/50 items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="diff-dot"></span>
+                <span id="active-difficulty-lbl" class="text-slate-700 text-xs font-bold uppercase tracking-wider">Medium</span>
+            </div>
+        </div>
+
+        <!-- Lives Counter -->
+        <div class="bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex gap-1.5" id="hud-lives">
             <!-- Hearts injected here -->
         </div>
     </div>
 
-    <!-- UI Overlay (Menu / Game Over) -->
-    <div id="ui-layer" class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm z-20 transition-opacity duration-300">
-        <div class="bg-white rounded-3xl p-8 shadow-2xl text-center max-w-sm w-full mx-4 border-4 border-orange-500">
-            <div class="text-6xl mb-4">🌴🚛🥥</div>
-            <h1 class="text-4xl font-extrabold text-orange-600 mb-2 drop-shadow-sm">Palm Fruit<br>Catcher</h1>
-            <p class="text-gray-600 mb-6 font-medium">Drag or use arrow keys to move the lorry.<br>Catch as many fruits as you can!</p>
+    <!-- UI Overlay (Start / Game Over Menu) -->
+    <div id="ui-layer" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm z-20 transition-opacity duration-300">
+        <div class="bg-white text-slate-800 rounded-3xl p-8 shadow-2xl text-center max-w-md w-full mx-4 border-4 border-emerald-500/80 flex flex-col gap-6">
             
-            <div id="final-score" class="text-2xl font-bold text-gray-800 hidden mb-6 bg-orange-100 py-3 rounded-xl border border-orange-200">
-                Final Score: <span id="score-val" class="text-orange-600 text-4xl ml-2">0</span>
+            <div>
+                <div class="text-6xl mb-3 drop-shadow-md">🌴🚛🧨</div>
+                <h1 class="text-4xl font-extrabold bg-gradient-to-r from-emerald-700 to-green-500 bg-clip-text text-transparent drop-shadow-sm">
+                    Harvest Run<br>FFB Catcher
+                </h1>
+                <p class="text-slate-500 text-sm mt-1 font-semibold">Catch fresh fruit bunches! Avoid TNT traps!</p>
             </div>
 
-            <button id="start-btn" class="w-full bg-gradient-to-b from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transform transition active:scale-95 text-2xl uppercase tracking-wider border border-green-700 cursor-pointer">
-                Play Now
+            <!-- Score display (for Game Over) -->
+            <div id="final-score" class="hidden flex-col items-center justify-center bg-emerald-50 py-4 px-6 rounded-2xl border border-emerald-100">
+                <span class="text-emerald-800 text-xs uppercase tracking-widest font-black">Your Yield</span>
+                <span id="score-val" class="text-5xl font-black text-emerald-600 mt-1">0</span>
+                <span id="high-score-lbl" class="text-xs text-amber-600 mt-2 font-bold animate-bounce">🏆 New High Score! 🏆</span>
+            </div>
+
+            <!-- Difficulty Selector -->
+            <div class="flex flex-col gap-2 text-left">
+                <label class="text-slate-500 text-xs font-black uppercase tracking-wider ml-1">Select Plantation Sector</label>
+                <div class="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                    <button onclick="setDifficulty('easy')" id="btn-easy" class="diff-btn py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer text-slate-500 hover:text-slate-800">
+                        Easy
+                    </button>
+                    <button onclick="setDifficulty('medium')" id="btn-medium" class="diff-btn py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer text-white bg-emerald-600 shadow-md">
+                        Medium
+                    </button>
+                    <button onclick="setDifficulty('hard')" id="btn-hard" class="diff-btn py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer text-slate-500 hover:text-slate-800">
+                        Hard
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-150 leading-relaxed">
+                💻 <span class="font-bold text-slate-700">Desktop:</span> Press Left/Right arrows or A/D keys.<br>
+                📱 <span class="font-bold text-slate-700">Mobile:</span> Tap or drag anywhere to steer.
+            </div>
+
+            <button id="start-btn" class="w-full bg-gradient-to-b from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-750 text-white font-black py-4 px-6 rounded-2xl shadow-lg transform transition active:scale-95 text-xl uppercase tracking-wider cursor-pointer border-b-4 border-green-700">
+                Start Harvesting
             </button>
         </div>
     </div>
 
+    <!-- Red damage flash layer -->
+    <div id="damage-flash" class="absolute inset-0 bg-red-600/0 pointer-events-none transition-all duration-150 z-30"></div>
+
     <script>
+        // WEB AUDIO API SYNTHESIZER
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.sequencerInterval = null;
+                this.tempo = 115;
+                this.currentBeat = 0;
+                // cheereful pentatonic scale melody
+                this.melody = [
+                    'C4', 'E4', 'G4', 'A4', 'G4', 'E4', 'G4', 'C5',
+                    'A4', 'G4', 'E4', 'D4', 'C4', 'D4', 'E4', 'G4'
+                ];
+                this.bassline = [
+                    'C3', 'C3', 'E3', 'E3', 'G3', 'G3', 'A3', 'A3',
+                    'F3', 'F3', 'F3', 'F3', 'G3', 'G3', 'G3', 'G3'
+                ];
+                this.frequencies = {
+                    'C3': 130.81, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00,
+                    'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'G4': 392.00, 'A4': 440.00, 'C5': 523.25
+                };
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+                this.startSequencer();
+            }
+
+            resume() {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            startSequencer() {
+                const beatDuration = 60 / this.tempo / 2; // 8th notes
+                let nextTime = this.ctx.currentTime;
+
+                const scheduleNextBeat = () => {
+                    while (nextTime < this.ctx.currentTime + 0.1) {
+                        if (!this.muted) {
+                            this.playStep(this.currentBeat, nextTime);
+                        }
+                        nextTime += beatDuration;
+                        this.currentBeat = (this.currentBeat + 1) % 16;
+                    }
+                };
+
+                this.sequencerInterval = setInterval(scheduleNextBeat, 25);
+            }
+
+            playStep(step, time) {
+                // Play Bass Note
+                const bassNote = this.bassline[step];
+                if (bassNote && Math.random() < 0.95) {
+                    this.triggerSynth(this.frequencies[bassNote], 'triangle', 0.1, 0.15, time);
+                }
+
+                // Play Melody Note
+                const melodyNote = this.melody[step];
+                if (melodyNote && step % 2 === 0) {
+                    this.triggerSynth(this.frequencies[melodyNote], 'sine', 0.05, 0.25, time);
+                }
+
+                // Play light rhythmic hi-hat (noise synth)
+                if (step % 4 === 2) {
+                    this.triggerNoise(0.015, 0.05, time);
+                }
+            }
+
+            triggerSynth(freq, type, volume, duration, time) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, time);
+
+                gain.gain.setValueAtTime(volume, time);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(time);
+                osc.stop(time + duration);
+            }
+
+            triggerNoise(volume, duration, time) {
+                if (!this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.setValueAtTime(8000, time);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(volume, time);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start(time);
+                noise.stop(time + duration);
+            }
+
+            // SFX triggers
+            playCatchSound() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Quick happy arpeggio
+                this.triggerSynth(392.00, 'sine', 0.15, 0.08, now); // G4
+                this.triggerSynth(523.25, 'sine', 0.15, 0.15, now + 0.06); // C5
+            }
+
+            playExplodeSound() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Bass boom synth
+                this.triggerSynth(80, 'sawtooth', 0.35, 0.4, now);
+                this.triggerSynth(50, 'triangle', 0.45, 0.6, now);
+                // Noise burst
+                this.triggerNoise(0.3, 0.5, now);
+            }
+
+            playMissSound() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Sad falling pitch
+                this.triggerSynth(220.00, 'triangle', 0.15, 0.2, now); // A3
+                this.triggerSynth(146.83, 'triangle', 0.15, 0.3, now + 0.1); // D3
+            }
+        }
+
+        const audio = new AudioEngine();
+
+        // Audio Toggle Listeners
+        const muteBtn = document.getElementById('mute-btn');
+        const soundOnIcon = document.getElementById('sound-on-icon');
+        const soundOffIcon = document.getElementById('sound-off-icon');
+
+        muteBtn.addEventListener('click', () => {
+            audio.init();
+            audio.muted = !audio.muted;
+            if (audio.muted) {
+                soundOnIcon.classList.add('hidden');
+                soundOffIcon.classList.remove('hidden');
+            } else {
+                soundOnIcon.classList.remove('hidden');
+                soundOffIcon.classList.add('hidden');
+                audio.resume();
+            }
+        });
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
@@ -80,22 +301,36 @@
         const startBtn = document.getElementById('start-btn');
         const hudScore = document.getElementById('hud-score');
         const hudLives = document.getElementById('hud-lives');
+        const activeDifficultyLbl = document.getElementById('active-difficulty-lbl');
+        const diffDot = document.getElementById('diff-dot');
         const finalScoreDiv = document.getElementById('final-score');
         const scoreVal = document.getElementById('score-val');
+        const highScoreLbl = document.getElementById('high-score-lbl');
+        const damageFlash = document.getElementById('damage-flash');
 
-        // Game State Variables
-        let gameState = 'start'; // start, playing, gameover
+        // Game Parameters
+        let gameState = 'start'; 
         let score = 0;
         let lives = 3;
-        let fruits = [];
+        let highScores = { easy: 0, medium: 0, hard: 0 };
+        
+        let difficulty = 'medium'; 
+        let difficultyConfig = {
+            easy: { baseSpeed: 0.75, spawnRate: 72, bombChance: 0.08, color: '#10B981' },
+            medium: { baseSpeed: 1.05, spawnRate: 52, bombChance: 0.20, color: '#3B82F6' },
+            hard: { baseSpeed: 1.45, spawnRate: 36, bombChance: 0.32, color: '#EF4444' }
+        };
+
+        let items = []; 
         let particles = [];
+        let exhaustParticles = [];
         let clouds = [];
+        let hills = [];
+        let estateTrees = [];
         let frameCount = 0;
-        let spawnInterval = 60;
-        let bgGrad;
         let flashAlpha = 0;
 
-        // Input State
+        // Steering inputs
         const keys = { ArrowLeft: false, ArrowRight: false, a: false, d: false };
         let targetX = null;
         let isDragging = false;
@@ -104,97 +339,158 @@
         let lorry = {
             x: 0,
             y: 0,
-            w: 120,
-            h: 50,
-            speed: 10
+            w: 130,
+            h: 55,
+            speed: 13
         };
 
-        // Initialize Clouds
-        for(let i=0; i<6; i++) {
-            clouds.push({
-                x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight * 0.4,
-                s: Math.random() * 0.5 + 0.5,
-                speed: Math.random() * 0.5 + 0.2
-            });
+        // Load High Scores safely
+        if (localStorage.getItem('palm_catcher_high_scores_v2')) {
+            try {
+                highScores = JSON.parse(localStorage.getItem('palm_catcher_high_scores_v2'));
+            } catch(e) { console.error(e); }
         }
 
-        // Handle Resizing
+        window.setDifficulty = function(level) {
+            difficulty = level;
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.className = "diff-btn py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer text-slate-500 hover:text-slate-800";
+            });
+            const selectedBtn = document.getElementById(`btn-${level}`);
+            
+            let colorClass = "bg-emerald-600 text-white shadow-md";
+            if (level === 'easy') colorClass = "bg-green-600 text-white shadow-md";
+            if (level === 'hard') colorClass = "bg-red-600 text-white shadow-md";
+            
+            selectedBtn.className = `diff-btn py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer ${colorClass}`;
+            
+            activeDifficultyLbl.innerText = level;
+            diffDot.style.backgroundColor = difficultyConfig[level].color;
+        };
+
+        // Generate lush backdrop components
+        function generateBackdrop() {
+            // Bright tropical hills
+            hills = [
+                { color: '#81C784', heightFactor: 0.48, complexity: 0.0035, speed: 0.1 }, // Distant light hill
+                { color: '#4CAF50', heightFactor: 0.38, complexity: 0.0055, speed: 0.25 }, // Mid hill
+                { color: '#2E7D32', heightFactor: 0.26, complexity: 0.0085, speed: 0.4 }  // Foreground dark green hill
+            ];
+
+            // Bright fluffy white clouds
+            clouds = [];
+            for(let i=0; i<6; i++) {
+                clouds.push({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight * 0.35,
+                    scale: Math.random() * 0.7 + 0.4,
+                    speed: Math.random() * 0.4 + 0.15
+                });
+            }
+
+            // Distant palm silhouettes
+            estateTrees = [];
+            for (let i = 0; i < 24; i++) {
+                estateTrees.push({
+                    x: Math.random() * window.innerWidth,
+                    size: Math.random() * 18 + 14
+                });
+            }
+        }
+
+        // Layout responsive resizing
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             
-            // Recreate Background Gradient
-            bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            bgGrad.addColorStop(0, '#4FC3F7'); 
-            bgGrad.addColorStop(1, '#E1F5FE');
-
-            // Responsive Lorry sizing
-            lorry.w = Math.max(120, canvas.width * 0.15);
-            lorry.w = Math.min(lorry.w, 200); 
-            lorry.h = lorry.w * 0.45;
-            lorry.speed = canvas.width * 0.015; // Keyboard speed scaling
+            lorry.w = Math.max(130, canvas.width * 0.17);
+            lorry.w = Math.min(lorry.w, 220); 
+            lorry.h = lorry.w * 0.43;
+            lorry.speed = canvas.width * 0.017;
             
-            // Align to ground level (ground is 50px from bottom)
-            lorry.y = canvas.height - 50 - lorry.h * 1.1; 
+            lorry.y = canvas.height - 60 - lorry.h * 1.05; 
             
             if (lorry.x + lorry.w > canvas.width) {
                 lorry.x = canvas.width - lorry.w;
             }
+            generateBackdrop();
         }
         window.addEventListener('resize', resizeCanvas);
 
-        // UI Handlers
+        // HUD Render helper
         function updateLivesUI() {
             hudLives.innerHTML = '';
             for(let i=0; i<3; i++) {
                 if (i < lives) {
-                    hudLives.innerHTML += `<svg class="w-8 h-8 text-red-500 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+                    hudLives.innerHTML += `<svg class="w-8 h-8 text-rose-500 drop-shadow-[0_2px_8px_rgba(244,63,94,0.4)] transition-all" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
                 } else {
-                    hudLives.innerHTML += `<svg class="w-8 h-8 text-gray-300 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+                    hudLives.innerHTML += `<svg class="w-8 h-8 text-slate-300 drop-shadow-sm transition-all" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
                 }
             }
         }
 
+        // Start button handler
         startBtn.addEventListener('click', () => {
-            // Setup game variables
+            // Audio initiation context rules (must trigger in user interaction event)
+            audio.init();
+            audio.resume();
+
             gameState = 'playing';
             score = 0;
             lives = 3;
-            fruits = [];
+            items = [];
             particles = [];
+            exhaustParticles = [];
             frameCount = 0;
-            spawnInterval = 60;
             lorry.x = canvas.width/2 - lorry.w/2;
             
-            // Update UI 
             hudScore.innerText = score;
+            setDifficulty(difficulty);
             updateLivesUI();
             
-            // Hide menu, show HUD
             uiLayer.style.opacity = '0';
             setTimeout(() => uiLayer.style.display = 'none', 300);
             hud.style.opacity = '1';
         });
 
+        function triggerDamageFlash() {
+            damageFlash.style.backgroundColor = 'rgba(239, 68, 68, 0.45)';
+            setTimeout(() => {
+                damageFlash.style.backgroundColor = 'rgba(239, 68, 68, 0)';
+            }, 150);
+        }
+
         function triggerGameOver() {
             gameState = 'gameover';
             
-            // Show menu, hide HUD
             uiLayer.style.display = 'flex';
             setTimeout(() => uiLayer.style.opacity = '1', 10);
             hud.style.opacity = '0';
             
+            let isNewHighScore = false;
+            if (score > highScores[difficulty]) {
+                highScores[difficulty] = score;
+                localStorage.setItem('palm_catcher_high_scores_v2', JSON.stringify(highScores));
+                isNewHighScore = true;
+            }
+
             finalScoreDiv.classList.remove('hidden');
             scoreVal.innerText = score;
-            startBtn.innerText = "Play Again";
+            
+            if (isNewHighScore) {
+                highScoreLbl.classList.remove('hidden');
+                highScoreLbl.innerHTML = `🏆 New Sector High Yield! 🏆 (Previous: ${highScores[difficulty]})`;
+            } else {
+                highScoreLbl.classList.add('hidden');
+            }
+
+            startBtn.innerText = "Harvest Again";
         }
 
-        // Input Event Listeners
+        // Steering bindings
         window.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
         window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
 
-        // Touch & Mouse (Drag logic)
         function handleInputMove(clientX) {
             targetX = clientX;
         }
@@ -222,117 +518,402 @@
         canvas.addEventListener('mouseup', () => isDragging = false);
         canvas.addEventListener('mouseleave', () => isDragging = false);
 
-        // Core Game Logic
-        function spawnFruit() {
-            let r = Math.max(15, canvas.width * 0.02);
-            r = Math.min(r, 28); // Cap max radius
+        // Spawn items
+        function spawnFallingObject() {
+            const config = difficultyConfig[difficulty];
+            let size = Math.max(18, canvas.width * 0.02);
+            size = Math.min(size, 28);
             
-            let x = Math.random() * (canvas.width - r*2) + r;
-            
-            // Difficulty scaling
-            let baseSpeed = canvas.height * 0.005;
-            let extraSpeed = score * (canvas.height * 0.00015);
+            let x = Math.random() * (canvas.width - size * 2.5) + size;
+            let isTNT = Math.random() < config.bombChance;
 
-            fruits.push({
+            let baseVelocity = canvas.height * 0.0055 * config.baseSpeed;
+            let dynamicBoost = score * (canvas.height * 0.0001); 
+
+            items.push({
                 x: x,
-                y: -r,
-                r: r,
-                speed: baseSpeed + extraSpeed,
-                rot: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 0.1
+                y: -size * 2,
+                r: size,
+                isTNT: isTNT,
+                speed: baseVelocity + dynamicBoost,
+                angle: Math.random() * Math.PI * 2,
+                spinSpeed: (Math.random() - 0.5) * 0.07
             });
         }
 
+        // Sound triggers and particles on hit
+        function createExplosion(x, y) {
+            audio.playExplodeSound();
+            for(let i=0; i<30; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 9,
+                    vy: (Math.random() - 0.5) * 9 - 4,
+                    r: Math.random() * 8 + 4,
+                    color: `hsla(${Math.random() * 35 + 10}, 100%, 55%, 1)`, // fiery burst
+                    life: 35,
+                    maxLife: 35,
+                    type: 'blast'
+                });
+            }
+        }
+
+        function createFFBSplash(x, y) {
+            audio.playCatchSound();
+            for(let i=0; i<10; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 5,
+                    vy: -Math.random() * 3 - 2,
+                    r: Math.random() * 3 + 2,
+                    color: '#E65100', // orange FFB loose fruit splat
+                    life: 20,
+                    maxLife: 20,
+                    type: 'dust'
+                });
+            }
+        }
+
+        // Logical step updates
         function update() {
             if (gameState !== 'playing') return;
 
-            // 1. Move Lorry
+            const config = difficultyConfig[difficulty];
+
+            // Movement Physics
             let movingWithKey = false;
             if (keys.ArrowLeft || keys.a) { lorry.x -= lorry.speed; movingWithKey = true; }
             if (keys.ArrowRight || keys.d) { lorry.x += lorry.speed; movingWithKey = true; }
 
-            // Smooth Lerp for Touch/Mouse
             if (!movingWithKey && targetX !== null && isDragging) {
                 let diff = targetX - (lorry.x + lorry.w / 2);
-                lorry.x += diff * 0.15; 
+                lorry.x += diff * 0.18;
             }
 
-            // Boundary constraints
             if (lorry.x < 0) lorry.x = 0;
             if (lorry.x + lorry.w > canvas.width) lorry.x = canvas.width - lorry.w;
 
-            // 2. Manage Fruits
-            frameCount++;
-            if (frameCount >= spawnInterval) {
-                spawnFruit();
-                frameCount = 0;
-                // Gradually increase spawn rate
-                spawnInterval = Math.max(20, 60 - Math.floor(score / 3));
+            // Exhaust particles
+            if (Math.random() < 0.35) {
+                exhaustParticles.push({
+                    x: lorry.x + lorry.w * 0.67,
+                    y: lorry.y - lorry.h * 0.1,
+                    vx: -1 - Math.random(),
+                    vy: -1 - Math.random(),
+                    r: Math.random() * 4 + 2,
+                    alpha: 0.5
+                });
             }
 
-            for (let i = fruits.length - 1; i >= 0; i--) {
-                let f = fruits[i];
-                f.y += f.speed;
-                f.rot += f.rotSpeed;
+            for (let i = exhaustParticles.length - 1; i >= 0; i--) {
+                let ep = exhaustParticles[i];
+                ep.x += ep.vx;
+                ep.y += ep.vy;
+                ep.alpha -= 0.025;
+                if (ep.alpha <= 0) {
+                    exhaustParticles.splice(i, 1);
+                }
+            }
+
+            // Spawn scheduling
+            frameCount++;
+            let dynamicSpawnInterval = Math.max(18, config.spawnRate - Math.floor(score / 5));
+            if (frameCount >= dynamicSpawnInterval) {
+                spawnFallingObject();
+                frameCount = 0;
+            }
+
+            // Item Loop
+            for (let i = items.length - 1; i >= 0; i--) {
+                let item = items[i];
+                item.y += item.speed;
+                item.angle += item.spinSpeed;
 
                 // Collision with Lorry
-                if (f.y + f.r >= lorry.y && f.y - f.r <= lorry.y + lorry.h) {
-                    if (f.x + f.r >= lorry.x && f.x - f.r <= lorry.x + lorry.w) {
-                        // Caught!
-                        score++;
-                        hudScore.innerText = score;
-                        flashAlpha = 0.3; // Screen flash
+                if (item.y + item.r >= lorry.y && item.y - item.r <= lorry.y + lorry.h) {
+                    if (item.x + item.r >= lorry.x && item.x - item.r <= lorry.x + lorry.w * 0.72) {
                         
-                        // Floating Text particle
-                        particles.push({ x: f.x, y: f.y, life: 30, maxLife: 30 });
+                        if (item.isTNT) {
+                            lives--;
+                            updateLivesUI();
+                            createExplosion(item.x, item.y);
+                            triggerDamageFlash();
+
+                            document.body.classList.remove('shake');
+                            void document.body.offsetWidth; 
+                            document.body.classList.add('shake');
+                            
+                            if (lives <= 0) {
+                                triggerGameOver();
+                            }
+                        } else {
+                            score++;
+                            hudScore.innerText = score;
+                            flashAlpha = 0.2; 
+                            createFFBSplash(item.x, item.y);
+
+                            particles.push({
+                                x: item.x,
+                                y: item.y - 12,
+                                label: '+1',
+                                life: 32,
+                                maxLife: 32,
+                                type: 'text'
+                            });
+                        }
                         
-                        fruits.splice(i, 1);
+                        items.splice(i, 1);
                         continue;
                     }
                 }
 
-                // Hit Ground (Missed)
-                if (f.y - f.r > canvas.height - 50) {
-                    lives--;
-                    updateLivesUI();
-                    fruits.splice(i, 1);
-
-                    // Screen Shake Effect
-                    document.body.classList.remove('shake');
-                    void document.body.offsetWidth; // Trigger reflow
-                    document.body.classList.add('shake');
-
-                    if (lives <= 0) {
-                        triggerGameOver();
+                // Missed items
+                if (item.y - item.r > canvas.height - 60) {
+                    if (!item.isTNT) {
+                        audio.playMissSound();
+                        if (difficulty === 'hard') {
+                            lives--;
+                            updateLivesUI();
+                            triggerDamageFlash();
+                            
+                            if (lives <= 0) {
+                                triggerGameOver();
+                            }
+                        }
                     }
+                    items.splice(i, 1);
                 }
             }
         }
 
-        // Drawing Logic
-        function drawFruit(fruit) {
+        // Custom Drawings
+        function drawRealisticFFB(ffb) {
             ctx.save();
-            ctx.translate(fruit.x, fruit.y);
-            ctx.rotate(fruit.rot);
-            
-            let r = fruit.r;
-            
-            // Main fruit body
-            ctx.fillStyle = '#FF5722'; 
+            ctx.translate(ffb.x, ffb.y);
+            ctx.rotate(ffb.angle);
+
+            let r = ffb.r;
+
+            // Draw a thick greenish-yellow fibrous stem stub at top
+            ctx.fillStyle = '#8DADE8'; 
+            let stemGrad = ctx.createLinearGradient(-r*0.2, -r*1.1, r*0.2, -r*0.8);
+            stemGrad.addColorStop(0, '#9E9D24'); // fibrous yellow-green
+            stemGrad.addColorStop(1, '#827717');
+            ctx.fillStyle = stemGrad;
             ctx.beginPath();
-            ctx.arc(0, 0, r, 0, Math.PI*2);
+            ctx.moveTo(-r*0.2, -r*0.6);
+            ctx.lineTo(-r*0.1, -r*1.2);
+            ctx.lineTo(r*0.2, -r*1.1);
+            ctx.lineTo(r*0.15, -r*0.6);
+            ctx.closePath();
             ctx.fill();
 
-            // Fruit texture dots (to resemble cluster)
-            ctx.fillStyle = '#D84315';
-            ctx.beginPath(); ctx.arc(-r*0.3, -r*0.2, r*0.25, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(r*0.4, r*0.1, r*0.25, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(-r*0.1, r*0.4, r*0.25, 0, Math.PI*2); ctx.fill();
+            // Draw the central cluster bunch egg-shape structure (Background base shadow)
+            ctx.fillStyle = '#1A0C00'; // dark brown core
+            ctx.beginPath();
+            ctx.ellipse(0, 0, r * 1.1, r * 1.3, 0, 0, Math.PI * 2);
+            ctx.fill();
 
-            // Stem
-            ctx.fillStyle = '#33691E';
-            ctx.fillRect(-r*0.1, -r*1.1, r*0.2, r*0.4);
+            // Draw multiple overlapping oval oil palm spikelets (gradient shaded to look highly realistic)
+            // Color gradient mimics realistic FFB ripening: Black at base (near center), Red-Orange in mid, Yellow tips.
+            const spikelets = [
+                { dx: -r*0.6, dy: -r*0.6, sr: r*0.35, rot: -0.8 },
+                { dx: r*0.5, dy: -r*0.5, sr: r*0.35, rot: 0.7 },
+                { dx: -r*0.2, dy: -r*0.8, sr: r*0.32, rot: -0.2 },
+                { dx: r*0.2, dy: -r*0.8, sr: r*0.32, rot: 0.2 },
+                { dx: -r*0.8, dy: 0, sr: r*0.38, rot: -1.2 },
+                { dx: r*0.8, dy: 0, sr: r*0.38, rot: 1.2 },
+                { dx: -r*0.4, dy: r*0.2, sr: r*0.4, rot: -0.5 },
+                { dx: r*0.4, dy: r*0.2, sr: r*0.4, rot: 0.5 },
+                { dx: 0, dy: -r*0.3, sr: r*0.42, rot: 0 },
+                { dx: -r*0.5, dy: r*0.7, sr: r*0.35, rot: -0.3 },
+                { dx: r*0.5, dy: r*0.7, sr: r*0.35, rot: 0.3 },
+                { dx: 0, dy: r*0.8, sr: r*0.38, rot: 0 }
+            ];
 
+            spikelets.forEach(sp => {
+                ctx.save();
+                ctx.translate(sp.dx, sp.dy);
+                ctx.rotate(sp.rot);
+                
+                // Create highly detailed radial gradient for each spike fruit
+                let fruitGrad = ctx.createRadialGradient(-sp.sr*0.2, -sp.sr*0.3, sp.sr*0.1, 0, 0, sp.sr);
+                fruitGrad.addColorStop(0, '#FFD54F'); // glossy yellow-orange tip
+                fruitGrad.addColorStop(0.3, '#E65100'); // rich orange middle
+                fruitGrad.addColorStop(0.75, '#5D4037'); // reddish-brown body
+                fruitGrad.addColorStop(1, '#1A0C00'); // black/purple base of fruit
+                
+                ctx.fillStyle = fruitGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, sp.sr * 1.0, sp.sr * 1.25, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Small glossy light reflection
+                ctx.fillStyle = 'rgba(255,255,255,0.22)';
+                ctx.beginPath();
+                ctx.ellipse(-sp.sr*0.3, -sp.sr*0.4, sp.sr*0.2, sp.sr*0.1, Math.PI/4, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.restore();
+            });
+
+            // Add spike spines poking outwards
+            ctx.strokeStyle = '#3E2723';
+            ctx.lineWidth = 2.5;
+            const spines = [
+                {x1: -r*0.8, y1: -r*0.4, x2: -r*1.3, y2: -r*0.6},
+                {x1: r*0.8, y1: -r*0.4, x2: r*1.3, y2: -r*0.6},
+                {x1: -r*0.9, y1: r*0.5, x2: -r*1.4, y2: r*0.7},
+                {x1: r*0.9, y1: r*0.5, x2: r*1.4, y2: r*0.7},
+                {x1: 0, y1: r*1.1, x2: 0, y2: r*1.5}
+            ];
+            spines.forEach(s => {
+                ctx.beginPath();
+                ctx.moveTo(s.x1, s.y1);
+                ctx.lineTo(s.x2, s.y2);
+                ctx.stroke();
+            });
+
+            ctx.restore();
+        }
+
+        function drawTNT(tnt) {
+            ctx.save();
+            ctx.translate(tnt.x, tnt.y);
+            ctx.rotate(tnt.angle);
+
+            let r = tnt.r;
+
+            // Draw 3 red dynamite stick cylinders bundled together
+            const drawStick = (ox, oy, w, h) => {
+                let stickGrad = ctx.createLinearGradient(ox, 0, ox + w, 0);
+                stickGrad.addColorStop(0, '#EF5350'); // bright red
+                stickGrad.addColorStop(0.5, '#C62828'); // dark shadow red
+                stickGrad.addColorStop(1, '#5C0303');
+                ctx.fillStyle = stickGrad;
+                ctx.fillRect(ox, oy, w, h);
+                
+                // Draw tan top cap
+                ctx.fillStyle = '#D7CCC8';
+                ctx.fillRect(ox, oy, w, 3);
+            };
+
+            // Left Stick, Center Stick, Right Stick
+            drawStick(-r*0.6, -r, r*0.35, r*2);
+            drawStick(-r*0.175, -r*1.1, r*0.35, r*2);
+            drawStick(r*0.25, -r, r*0.35, r*2);
+
+            // Black bundle wrapping straps
+            ctx.fillStyle = '#212121';
+            ctx.fillRect(-r*0.65, -r*0.5, r*1.3, r*0.25);
+            ctx.fillRect(-r*0.65, r*0.25, r*1.3, r*0.25);
+
+            // White text "TNT" across center strap
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = `bold ${Math.floor(r*0.32)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('TNT', 0, -r*0.38);
+
+            // Fuse wire sticking out from top center stick
+            ctx.strokeStyle = '#757575';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(0, -r*1.1);
+            ctx.quadraticCurveTo(r * 0.4, -r * 1.4, r * 0.6, -r * 1.7);
+            ctx.stroke();
+
+            // Fuse Sparkle Flame particles
+            let sparkSize = r * (0.18 + Math.random() * 0.15);
+            ctx.fillStyle = '#FF9100';
+            ctx.beginPath();
+            ctx.arc(r * 0.6, -r * 1.7, sparkSize, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#FFD600';
+            ctx.beginPath();
+            ctx.arc(r * 0.6, -r * 1.7, sparkSize*0.6, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawBackdrop() {
+            // Bright tropical daylight sky
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGrad.addColorStop(0, '#29B6F6'); // beautiful sky blue
+            skyGrad.addColorStop(0.5, '#80DEEA'); // tropical teal mist
+            skyGrad.addColorStop(1, '#E0F7FA'); 
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw bright yellow sun
+            ctx.fillStyle = '#FFF59D';
+            ctx.shadowColor = '#FFD54F';
+            ctx.shadowBlur = 45;
+            ctx.beginPath(); 
+            ctx.arc(canvas.width*0.2, canvas.height*0.22, Math.min(canvas.width*0.065, 80), 0, Math.PI*2); 
+            ctx.fill();
+            ctx.shadowBlur = 0; // reset instantly for redraw optimization
+
+            // Soft daylight fluffy white clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            clouds.forEach(c => {
+                c.x -= c.speed;
+                if (c.x < -180) { c.x = canvas.width + 180; c.y = Math.random() * canvas.height * 0.4; }
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, 42*c.scale, 0, Math.PI*2);
+                ctx.arc(c.x + 32*c.scale, c.y - 18*c.scale, 52*c.scale, 0, Math.PI*2);
+                ctx.arc(c.x + 70*c.scale, c.y, 42*c.scale, 0, Math.PI*2);
+                ctx.fill();
+            });
+
+            // Mountains & Hills
+            hills.forEach((hill, hIdx) => {
+                ctx.fillStyle = hill.color;
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height);
+                for(let x=0; x<=canvas.width; x+=10) {
+                    let y = canvas.height - 60 - (canvas.height * hill.heightFactor) + Math.sin(x * hill.complexity) * 45;
+                    ctx.lineTo(x, y);
+                }
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.fill();
+
+                // Draw gorgeous bright green palm silhouettes on mid-foreground hill
+                if (hIdx === 2) {
+                    ctx.fillStyle = '#1B5E20';
+                    estateTrees.forEach(t => {
+                        let hillY = canvas.height - 60 - (canvas.height * hill.heightFactor) + Math.sin(t.x * hill.complexity) * 45;
+                        drawSilhouettePalm(t.x, hillY, t.size);
+                    });
+                }
+            });
+        }
+
+        function drawSilhouettePalm(x, y, h) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            // Trunk
+            ctx.strokeStyle = '#1B5E20';
+            ctx.lineWidth = h * 0.13;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(h * 0.1, -h * 0.5, h * 0.05, -h);
+            ctx.stroke();
+
+            // Palm Fronds
+            ctx.translate(h * 0.05, -h);
+            ctx.lineWidth = h * 0.045;
+            for(let j=0; j<8; j++) {
+                ctx.rotate(Math.PI / 4);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(h * 0.45, -h * 0.12, h * 0.65, h * 0.22);
+                ctx.stroke();
+            }
             ctx.restore();
         }
 
@@ -343,124 +924,198 @@
             let w = lorry.w;
             let h = lorry.h;
             
-            // Exhaust Pipe
-            ctx.fillStyle = '#757575';
-            ctx.fillRect(x + w*0.65, y - h*0.3, w*0.05, h*0.5);
-
-            // Trailer Bed (To catch fruits)
-            ctx.fillStyle = '#3E2723'; 
-            ctx.fillRect(x, y + h*0.3, w*0.7, h*0.5);
-            
-            // Wooden cage slats
-            ctx.strokeStyle = '#5D4037';
-            ctx.lineWidth = Math.max(2, w * 0.02);
-            for(let i=0; i<=4; i++) {
+            // Draw exhaust particles
+            exhaustParticles.forEach(ep => {
+                ctx.fillStyle = `rgba(180, 180, 180, ${ep.alpha})`;
                 ctx.beginPath();
-                let slatX = x + (w*0.7/4)*i;
-                if (i===4) slatX -= ctx.lineWidth/2;
-                if (i===0) slatX += ctx.lineWidth/2;
-                ctx.moveTo(slatX, y + h*0.1);
-                ctx.lineTo(slatX, y + h*0.8);
+                ctx.arc(ep.x, ep.y, ep.r, 0, Math.PI*2);
+                ctx.fill();
+            });
+
+            // Shiny Chrome Exhaust Pipe
+            let pipeGrad = ctx.createLinearGradient(x + w*0.66, 0, x + w*0.69, 0);
+            pipeGrad.addColorStop(0, '#9E9E9E');
+            pipeGrad.addColorStop(0.5, '#FFFFFF');
+            pipeGrad.addColorStop(1, '#616161');
+            ctx.fillStyle = pipeGrad;
+            ctx.fillRect(x + w*0.66, y - h*0.28, w*0.03, h*0.5);
+            ctx.fillStyle = '#212121';
+            ctx.fillRect(x + w*0.66, y - h*0.3, w*0.03, h*0.05);
+
+            // Rugged Wood Cargo Slat Trailer (Reddish timber)
+            let trailerGrad = ctx.createLinearGradient(x, y + h*0.2, x, y + h*0.8);
+            trailerGrad.addColorStop(0, '#A73A24'); // agricultural mahogany timber
+            trailerGrad.addColorStop(1, '#5D190B');
+            ctx.fillStyle = trailerGrad;
+            ctx.fillRect(x, y + h*0.2, w*0.65, h*0.58);
+            
+            // Safety bumper stripes
+            ctx.save();
+            ctx.rect(x, y + h*0.7, w*0.65, h*0.08);
+            ctx.clip();
+            ctx.fillStyle = '#FFB300';
+            ctx.fillRect(x, y + h*0.7, w*0.65, h*0.08);
+            ctx.strokeStyle = '#212121'; 
+            ctx.lineWidth = 4;
+            for(let b=0; b<15; b++) {
+                ctx.beginPath();
+                ctx.moveTo(x + b*15 - 10, y + h*0.7);
+                ctx.lineTo(x + b*15 + 5, y + h*0.8);
                 ctx.stroke();
             }
-            // Horizontal slat
+            ctx.restore();
+
+            // Wooden cage enclosure slats
+            ctx.strokeStyle = '#3E2723';
+            ctx.lineWidth = Math.max(3, w * 0.016);
+            for(let i=0; i<=5; i++) {
+                ctx.beginPath();
+                let slatX = x + (w*0.65/5)*i;
+                if (i===5) slatX -= ctx.lineWidth/2;
+                if (i===0) slatX += ctx.lineWidth/2;
+                ctx.moveTo(slatX, y);
+                ctx.lineTo(slatX, y + h*0.7);
+                ctx.stroke();
+            }
             ctx.beginPath();
-            ctx.moveTo(x, y + h*0.4);
-            ctx.lineTo(x + w*0.7, y + h*0.4);
+            ctx.moveTo(x, y + h*0.2);
+            ctx.lineTo(x + w*0.65, y + h*0.2);
+            ctx.moveTo(x, y + h*0.45);
+            ctx.lineTo(x + w*0.65, y + h*0.45);
             ctx.stroke();
 
-            // Cabin
-            ctx.fillStyle = '#2E7D32'; 
-            ctx.beginPath();
-            ctx.moveTo(x + w*0.65, y + h*0.8); 
-            ctx.lineTo(x + w*0.65, y + h*0.2); 
-            ctx.lineTo(x + w*0.85, y + h*0.2); 
-            ctx.lineTo(x + w*0.95, y + h*0.4); 
-            ctx.lineTo(x + w*1.0, y + h*0.4);  
-            ctx.lineTo(x + w*1.0, y + h*0.8);  
-            ctx.fill();
+            // Cab Chassis (Classic Red agricultural truck)
+            let cabinGrad = ctx.createLinearGradient(x + w*0.65, 0, x + w*0.98, 0);
+            cabinGrad.addColorStop(0, '#C62828'); 
+            cabinGrad.addColorStop(0.7, '#E53935');
+            cabinGrad.addColorStop(1, '#991B1B');
+            ctx.fillStyle = cabinGrad;
             
-            // Cabin Window
-            ctx.fillStyle = '#81D4FA';
             ctx.beginPath();
-            ctx.moveTo(x + w*0.7, y + h*0.25);
-            ctx.lineTo(x + w*0.83, y + h*0.25);
-            ctx.lineTo(x + w*0.9, y + h*0.4);
-            ctx.lineTo(x + w*0.7, y + h*0.4);
+            ctx.moveTo(x + w*0.65, y + h*0.78); 
+            ctx.lineTo(x + w*0.65, y + h*0.12); 
+            ctx.lineTo(x + w*0.84, y + h*0.12); 
+            ctx.lineTo(x + w*0.94, y + h*0.38); 
+            ctx.lineTo(x + w*1.0, y + h*0.38);  
+            ctx.lineTo(x + w*1.0, y + h*0.78);  
+            ctx.closePath();
             ctx.fill();
 
-            // Wheels
+            // Window Glass
+            let windowGrad = ctx.createLinearGradient(0, y+h*0.15, 0, y+h*0.35);
+            windowGrad.addColorStop(0, '#FFFFFF');
+            windowGrad.addColorStop(1, '#81D4FA');
+            ctx.fillStyle = windowGrad;
+            ctx.beginPath();
+            ctx.moveTo(x + w*0.69, y + h*0.18);
+            ctx.lineTo(x + w*0.82, y + h*0.18);
+            ctx.lineTo(x + w*0.89, y + h*0.35);
+            ctx.lineTo(x + w*0.69, y + h*0.35);
+            ctx.closePath();
+            ctx.fill();
+
+            // Heavy duty wheels
             let drawWheel = (wx, wy, wr) => {
-                ctx.fillStyle = '#212121';
+                ctx.fillStyle = '#212121'; 
                 ctx.beginPath(); ctx.arc(wx, wy, wr, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#BDBDBD';
+                
+                ctx.fillStyle = '#555555'; 
+                ctx.beginPath(); ctx.arc(wx, wy, wr*0.75, 0, Math.PI*2); ctx.fill();
+
+                ctx.fillStyle = '#CFD8DC'; 
                 ctx.beginPath(); ctx.arc(wx, wy, wr*0.4, 0, Math.PI*2); ctx.fill();
+                
+                ctx.fillStyle = '#212121'; 
+                ctx.beginPath(); ctx.arc(wx, wy, wr*0.15, 0, Math.PI*2); ctx.fill();
             };
-            drawWheel(x + w*0.15, y + h*0.85, h*0.25);
-            drawWheel(x + w*0.45, y + h*0.85, h*0.25);
-            drawWheel(x + w*0.85, y + h*0.85, h*0.25);
+            drawWheel(x + w*0.15, y + h*0.82, h*0.24);
+            drawWheel(x + w*0.45, y + h*0.82, h*0.24);
+            drawWheel(x + w*0.83, y + h*0.82, h*0.24);
 
             ctx.restore();
         }
 
-        function draw() {
-            // Clear Canvas & Background
-            ctx.fillStyle = bgGrad || '#4FC3F7';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw Sun
-            ctx.fillStyle = '#FFF59D';
-            ctx.beginPath(); ctx.arc(canvas.width*0.8, canvas.height*0.2, canvas.width*0.05, 0, Math.PI*2); ctx.fill();
+        function drawGround() {
+            // Earth underbed ground
+            ctx.fillStyle = '#795548'; // Rich agricultural soil
+            ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
 
-            // Draw Clouds
-            ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            clouds.forEach(c => {
-                c.x -= c.speed;
-                if (c.x < -100) { c.x = canvas.width + 100; c.y = Math.random() * canvas.height * 0.4; }
+            // Fresh Grass boundary edge
+            ctx.fillStyle = '#33691E';
+            ctx.fillRect(0, canvas.height - 60, canvas.width, 15);
+
+            // Pathway soil patterns
+            ctx.fillStyle = '#5D4037';
+            for(let i=0; i<canvas.width; i+=40) {
                 ctx.beginPath();
-                ctx.arc(c.x, c.y, 30*c.s, 0, Math.PI*2);
-                ctx.arc(c.x + 25*c.s, c.y - 15*c.s, 35*c.s, 0, Math.PI*2);
-                ctx.arc(c.x + 50*c.s, c.y, 30*c.s, 0, Math.PI*2);
+                ctx.arc(i + (i%3)*10, canvas.height - 30 + (i%2)*8, 2 + (i%4), 0, Math.PI*2);
                 ctx.fill();
+            }
+        }
+
+        function draw() {
+            // Backdrop and hills
+            drawBackdrop();
+
+            // Ground pathway
+            drawGround();
+
+            // Render falling elements
+            items.forEach(item => {
+                if (item.isTNT) {
+                    drawTNT(item);
+                } else {
+                    drawRealisticFFB(item);
+                }
             });
 
-            // Draw Ground
-            ctx.fillStyle = '#5D4037';
-            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
-            ctx.fillStyle = '#7CB342';
-            ctx.fillRect(0, canvas.height - 50, canvas.width, 15);
-
-            // Draw Game Objects
-            fruits.forEach(f => drawFruit(f));
+            // Render active Lorry
             drawLorry();
 
-            // Flash Effect for catches
+            // Flash visual overlay ticks
             if (flashAlpha > 0) {
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                flashAlpha -= 0.05;
+                flashAlpha -= 0.04;
             }
 
-            // Draw Particles (+1 Texts)
+            // Burst particles loop
             for(let i=particles.length-1; i>=0; i--) {
                 let p = particles[i];
                 p.life--;
-                p.y -= 2; 
-                ctx.fillStyle = `rgba(255, 120, 0, ${p.life / p.maxLife})`; 
-                ctx.font = 'bold 30px sans-serif';
-                ctx.fillText('+1', p.x, p.y);
+                
+                if (p.type === 'blast') {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.15; 
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r * (p.life / p.maxLife), 0, Math.PI*2);
+                    ctx.fill();
+                } else if (p.type === 'dust') {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                    ctx.fill();
+                } else if (p.type === 'text') {
+                    p.y -= 1.5;
+                    ctx.fillStyle = `rgba(4, 120, 87, ${p.life / p.maxLife})`; 
+                    ctx.font = 'black 28px system-ui';
+                    ctx.fillText(p.label, p.x, p.y);
+                }
+
                 if (p.life <= 0) particles.splice(i, 1);
             }
         }
 
-        // Main Game Loop
         function gameLoop() {
             update();
             draw();
             requestAnimationFrame(gameLoop);
         }
 
-        // Initialize and Start Engine
         window.onload = () => {
             resizeCanvas();
             requestAnimationFrame(gameLoop);
